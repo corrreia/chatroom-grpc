@@ -418,11 +418,11 @@ type AdminServiceClient interface {
 	GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error)
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
-	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	KickUser(ctx context.Context, in *KickUserRequest, opts ...grpc.CallOption) (*KickUserResponse, error)
 	BanUser(ctx context.Context, in *BanUserRequest, opts ...grpc.CallOption) (*BanUserResponse, error)
 	UnbanUser(ctx context.Context, in *UnbanUserRequest, opts ...grpc.CallOption) (*UnbanUserResponse, error)
+	OpUser(ctx context.Context, in *OpUserRequest, opts ...grpc.CallOption) (*OpUserResponse, error)
 }
 
 type adminServiceClient struct {
@@ -454,15 +454,6 @@ func (c *adminServiceClient) GetUser(ctx context.Context, in *GetUserRequest, op
 func (c *adminServiceClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
 	out := new(CreateUserResponse)
 	err := c.cc.Invoke(ctx, "/AdminService/CreateUser", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *adminServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error) {
-	out := new(UpdateUserResponse)
-	err := c.cc.Invoke(ctx, "/AdminService/UpdateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -505,6 +496,15 @@ func (c *adminServiceClient) UnbanUser(ctx context.Context, in *UnbanUserRequest
 	return out, nil
 }
 
+func (c *adminServiceClient) OpUser(ctx context.Context, in *OpUserRequest, opts ...grpc.CallOption) (*OpUserResponse, error) {
+	out := new(OpUserResponse)
+	err := c.cc.Invoke(ctx, "/AdminService/OpUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations must embed UnimplementedAdminServiceServer
 // for forward compatibility
@@ -512,11 +512,11 @@ type AdminServiceServer interface {
 	GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error)
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
-	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
 	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	KickUser(context.Context, *KickUserRequest) (*KickUserResponse, error)
 	BanUser(context.Context, *BanUserRequest) (*BanUserResponse, error)
 	UnbanUser(context.Context, *UnbanUserRequest) (*UnbanUserResponse, error)
+	OpUser(context.Context, *OpUserRequest) (*OpUserResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
 
@@ -533,9 +533,6 @@ func (UnimplementedAdminServiceServer) GetUser(context.Context, *GetUserRequest)
 func (UnimplementedAdminServiceServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
-func (UnimplementedAdminServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
-}
 func (UnimplementedAdminServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
 }
@@ -547,6 +544,9 @@ func (UnimplementedAdminServiceServer) BanUser(context.Context, *BanUserRequest)
 }
 func (UnimplementedAdminServiceServer) UnbanUser(context.Context, *UnbanUserRequest) (*UnbanUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnbanUser not implemented")
+}
+func (UnimplementedAdminServiceServer) OpUser(context.Context, *OpUserRequest) (*OpUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OpUser not implemented")
 }
 func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
 
@@ -611,24 +611,6 @@ func _AdminService_CreateUser_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AdminServiceServer).CreateUser(ctx, req.(*CreateUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AdminService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AdminServiceServer).UpdateUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/AdminService/UpdateUser",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AdminServiceServer).UpdateUser(ctx, req.(*UpdateUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -705,6 +687,24 @@ func _AdminService_UnbanUser_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_OpUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OpUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).OpUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/AdminService/OpUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).OpUser(ctx, req.(*OpUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -725,10 +725,6 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AdminService_CreateUser_Handler,
 		},
 		{
-			MethodName: "UpdateUser",
-			Handler:    _AdminService_UpdateUser_Handler,
-		},
-		{
 			MethodName: "DeleteUser",
 			Handler:    _AdminService_DeleteUser_Handler,
 		},
@@ -743,6 +739,10 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UnbanUser",
 			Handler:    _AdminService_UnbanUser_Handler,
+		},
+		{
+			MethodName: "OpUser",
+			Handler:    _AdminService_OpUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -21,35 +21,27 @@ message ConnectResponse {
     string token = 1;
 
     enum Status {
-        OK = 0;
+        SUCCESS = 0;
         INVALID_CREDENTIALS = 1;
         ALREADY_CONNECTED = 2;
         SERVER_FULL = 3;
         USER_BANNED = 4;
         USER_UNKNOWN = 5;
+        INVALID_SERVER_PASSWORD = 6;
     }
-
     Status status = 2;
-    string message = 3;
 }
 
 message DisconnectRequest {
     int64 timestamp = 1;
-    string token = 2;
 }
 
 message DisconnectResponse {
-    bool success = 1;
-
     enum Status {
-        OK = 0;
+        SUCCESS = 0;
         INVALID_TOKEN = 1;
-        NOT_CONNECTED = 2;
     }
-
     Status status = 2;
-
-    string message = 3;
 }
 
 message RegisterRequest {
@@ -57,20 +49,18 @@ message RegisterRequest {
 
     string username = 2;
     string password_hash = 3;
+
+    string server_password = 4;
 }
 
 message RegisterResponse {
-    bool success = 1;
-
     enum Status {
-        OK = 0;
+        SUCCESS = 0;
         USERNAME_TAKEN = 1;
         USER_BANNED = 2;
+        INVALID_SERVER_PASSWORD = 3;
     }
-
     Status status = 2;
-
-    string message = 3;
 }
 
 service DataService {
@@ -80,36 +70,26 @@ service DataService {
 
 message SendMessageRequest {
     int64 timestamp = 1;
-    string token = 2;
-    string message = 3;
+    string message = 2;
 }
 
 message SendMessageResponse {
-    bool success = 1;
-
     enum Status {
-        OK = 0;
+        SUCCESS = 0;
         INVALID_TOKEN = 1;
-        NOT_CONNECTED = 2;
     }
-
     Status status = 2;
-
-    string message = 3;
 }
 
 message SendCommandRequest {
     int64 timestamp = 1;
-    string token = 2;
-    string command = 3;
-    repeated string args = 4;
+    string command = 2;
+    repeated string args = 3;
 }
 
 message SendCommandResponse {
-    bool success = 1;
-
     enum Status {
-        OK = 0;
+        SUCCESS = 0;
         INVALID_TOKEN = 1;
         NOT_CONNECTED = 2;
 
@@ -118,33 +98,33 @@ message SendCommandResponse {
 
         COMMAND_FAILED = 5;
     }
-
     Status status = 2;
-
-    string message = 3;
 }
 
 service BroadcastService {
     rpc Subscribe (SubscribeRequest) returns (stream SubscribeResponse) {}
 }
 
-message SubscribeRequest {
-    int64 timestamp = 1;
-    string token = 2;
-}
-
+message SubscribeRequest {}
+    
 message SubscribeResponse {
-    string message = 1;
+    enum Type {
+        MESSAGE = 0;
+        LOGIN = 1;
+        LOGOUT = 2;
+    }
+    Type type = 1;
 
     enum Status {
-        OK = 0;
+        SUCCESS = 0;
         INVALID_TOKEN = 1;
-        NOT_CONNECTED = 2;
 
         SERVER_ERROR = 3;
     }
-
     Status status = 2;
+
+    string username = 3;
+    string message = 4;
 }
 
 message User {
@@ -156,16 +136,14 @@ message User {
         USER = 0;
         ADMIN = 1;
     }
-
     Role role = 4;
 
     string lastKnownIp = 6;
     int64 lastSeen = 7;
-
     int64 created = 8;
-
     bool connected = 9;
     bool banned = 10;
+    int64 timeConnected = 11;
 }
 
 service AdminService {
@@ -173,168 +151,140 @@ service AdminService {
     rpc GetUser (GetUserRequest) returns (GetUserResponse) {}
 
     rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
-    rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse) {}
     rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse) {}
 
     rpc KickUser (KickUserRequest) returns (KickUserResponse) {}
     rpc BanUser (BanUserRequest) returns (BanUserResponse) {}
     rpc UnbanUser (UnbanUserRequest) returns (UnbanUserResponse) {}
+
+    rpc OpUser (OpUserRequest) returns (OpUserResponse) {}
 }
 
 message GetUsersRequest {
     int64 timestamp = 1;
-    string token = 2;
 }
 
 message GetUsersResponse {
     repeated User users = 1;
-
     enum Status {
-        OK = 0;
+        SUCCESS = 0;
         INVALID_TOKEN = 1;
         NOT_CONNECTED = 2;
         NOT_ADMIN = 3;
     }
-
     Status status = 2;
 }
 
 message GetUserRequest {
     int64 timestamp = 1;
-    string token = 2;
-    string username = 3;
+    string username = 2;
 }
 
 message GetUserResponse {
     User user = 1;
-
     enum Status {
-        OK = 0;
+        SUCCESS = 0;
         INVALID_TOKEN = 1;
         NOT_CONNECTED = 2;
         NOT_ADMIN = 3;
         USER_NOT_FOUND = 4;
     }
-
     Status status = 2;
 }
 
 message CreateUserRequest {
     int64 timestamp = 1;
-    string token = 2;
-    User user = 3;
+    User user = 2;
 }
 
 message CreateUserResponse {
     User user = 1;
-
     enum Status {
-        OK = 0;
+        SUCCESS = 0;
         INVALID_TOKEN = 1;
         NOT_CONNECTED = 2;
         NOT_ADMIN = 3;
         USER_ALREADY_EXISTS = 4;
     }
-
-    Status status = 2;
-}
-
-message UpdateUserRequest {
-    int64 timestamp = 1;
-    string token = 2;
-    User user = 3;
-}
-
-message UpdateUserResponse {
-    User user = 1;
-
-    enum Status {
-        OK = 0;
-        INVALID_TOKEN = 1;
-        NOT_CONNECTED = 2;
-        NOT_ADMIN = 3;
-        USER_NOT_FOUND = 4;
-    }
-
     Status status = 2;
 }
 
 message DeleteUserRequest {
     int64 timestamp = 1;
-    string token = 2;
-    string username = 3;
+    string username = 2;
 }
 
 message DeleteUserResponse {
     bool success = 1;
-
     enum Status {
-        OK = 0;
+        SUCCESS = 0;
         INVALID_TOKEN = 1;
         NOT_CONNECTED = 2;
         NOT_ADMIN = 3;
         USER_NOT_FOUND = 4;
     }
-
     Status status = 2;
 }
 
 message KickUserRequest {
     int64 timestamp = 1;
-    string token = 2;
     string username = 3;
 }
 
 message KickUserResponse {
-    bool success = 1;
-
     enum Status {
-        OK = 0;
+        SUCCESS = 0;
         INVALID_TOKEN = 1;
         NOT_CONNECTED = 2;
         NOT_ADMIN = 3;
         USER_NOT_FOUND = 4;
     }
-
     Status status = 2;
 }
 
 message BanUserRequest {
     int64 timestamp = 1;
-    string token = 2;
-    string username = 3;
+    string username = 2;
 }
 
 message BanUserResponse {
-    bool success = 1;
-
     enum Status {
-        OK = 0;
+        SUCCESS = 0;
         INVALID_TOKEN = 1;
         NOT_CONNECTED = 2;
         NOT_ADMIN = 3;
         USER_NOT_FOUND = 4;
     }
-
     Status status = 2;
 }
 
 message UnbanUserRequest {
     int64 timestamp = 1;
-    string token = 2;
-    string username = 3;
+    string username = 2;
 }
 
 message UnbanUserResponse {
-    bool success = 1;
-
     enum Status {
-        OK = 0;
+        SUCCESS = 0;
         INVALID_TOKEN = 1;
         NOT_CONNECTED = 2;
         NOT_ADMIN = 3;
         USER_NOT_FOUND = 4;
     }
+    Status status = 2;
+}
 
+message OpUserRequest {
+    int64 timestamp = 1;
+    string username = 2;
+}
+
+message OpUserResponse {
+    enum Status {
+        SUCCESS = 0;
+        INVALID_TOKEN = 1;
+        NOT_ADMIN = 3;
+        USER_NOT_FOUND = 4;
+    }
     Status status = 2;
 }
