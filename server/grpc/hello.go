@@ -8,6 +8,7 @@ import (
 
 	pb "github.com/corrreia/chatroom-grpc/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 )
 
 type helloServer struct {
@@ -17,6 +18,8 @@ type helloServer struct {
 var cacert string = ""
 
 func HelloServer(port int, CAcert string){
+	log.Println("Starting Hello Server in port ", port)
+
 	//start unencrypted server
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
@@ -35,7 +38,8 @@ func HelloServer(port int, CAcert string){
 
 func (s *helloServer) Hello(ctx context.Context, in *pb.HelloClient) (*pb.HelloServer, error) {
 	//get ip
-	ip := ctx.Value("ip").(string)
+	p, _ := peer.FromContext(ctx)
+	ip, _, _ := net.SplitHostPort(p.Addr.String())
 	
 	log.Println("CA certificate request from: ", ip)
 

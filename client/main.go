@@ -99,7 +99,7 @@ func getCA(host string, port int, path string) {
 	CACert := resp.CA
 
 	//create file
-	caFile, err := os.Create(path+"/ca.pem")
+	caFile, err := os.Create(path+"/ca_cert.pem")
 	if err != nil {
 		log.Fatalf("could not create file: %v", err)
 	}

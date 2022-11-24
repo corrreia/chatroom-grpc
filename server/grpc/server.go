@@ -27,6 +27,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/peer"
 
 	pb "github.com/corrreia/chatroom-grpc/proto"
 )
@@ -36,6 +37,12 @@ type ecServer struct {
 }
 
 func (s *ecServer) UnaryEcho(ctx context.Context, req *pb.EchoRequest) (*pb.EchoResponse, error) {
+	//get ip
+	p, _ := peer.FromContext(ctx)
+	ip, _, _ := net.SplitHostPort(p.Addr.String())
+
+	log.Printf("Received unary echo request from %s: %s", ip, req.Message)
+
 	return &pb.EchoResponse{Message: req.Message}, nil
 }
 
@@ -53,7 +60,7 @@ func StartServer(port int, password string, maxClients int, certPath string, key
 	if err != nil {
 		log.Fatalf("failed to create credentials: %v", err)
 	}
-	log.Println("Credentials loaded")
+	log.Println("Server credentials loaded")
 
 	s := grpc.NewServer(grpc.Creds(creds))
 
