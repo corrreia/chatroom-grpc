@@ -2,4 +2,4 @@
 
 # Generate all ProtoMessages.
 
-proto -go
+protoc --go_out=. --go-grpc_out=. *.proto
