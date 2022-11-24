@@ -1,82 +1,113 @@
+/*
+ *
+ * Copyright 2018 gRPC authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+// Binary client is an example client.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"log"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	pb "github.com/corrreia/chatroom-grpc/proto"
+	"github.com/corrreia/chatroom-grpc/utils"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
-type model int
+var addr = flag.String("addr", "localhost:8421", "the address to connect to")
 
-type tickMsg time.Time
+func callUnaryEcho(client pb.EchoClient, message string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	resp, err := client.UnaryEcho(ctx, &pb.EchoRequest{Message: message})
+	if err != nil {
+		log.Fatalf("client.UnaryEcho(_) = _, %v: ", err)
+	}
+	fmt.Println("UnaryEcho: ", resp.Message)
+}
 
 func main() {
-	// get server address from command line
-	serverAddr := flag.String("server", "localhost:8421", "server address")
-	serverPass := flag.String("password", "", "server password")
-	certPath := flag.String("cert_path", "./cert/", "path to ca_cert.pem")
 	flag.Parse()
 
-	//read cacert in certPath+ca_cert.pem
-	CAcert, err := os.ReadFile(*(certPath) + "ca_cert.pem")
+	creds, err := credentials.NewClientTLSFromFile(utils.Path("/ca_cert.pem"), "chat.dev.tomascorreia.net")
 	if err != nil {
-		fmt.Println("Error reading ca_cert.pem")
-		return
+		log.Fatalf("failed to load credentials: %v", err)
 	}
 
-	//split serverAddr into host and port
-	host, _, err := net.SplitHostPort(*serverAddr)
+	// split host and port
+	host, port, err := net.SplitHostPort(*addr)
 	if err != nil {
-		fmt.Println("Error splitting server address")
-		return
+		log.Fatalf("failed to split host and port: %v", err)
 	}
-	creds, err := credentials.NewClientTLSFromFile(string(CAcert), host)
+	portInt , _ := strconv.Atoi(port)
+
+	//hello port is port+1
+
+	getCA(host, portInt, utils.Path("/"))
+
+	// Set up a connection to the server.
+	conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
-		fmt.Println("Error reading ca_cert.pem")
-		return
+		log.Fatalf("did not connect: %v", err)
 	}
-	
-	p := tea.NewProgram(model(5), tea.WithAltScreen())
-	if _, err := p.Run(); err != nil {
-		log.Fatal(err)
+	defer conn.Close()
+
+	// Make a echo client and send an RPC.
+	rgc := pb.NewEchoClient(conn)
+	callUnaryEcho(rgc, "hello world")
+}
+
+func getCA(host string, port int, path string) {
+	// Set up a connection to the server.
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", host, port+1), grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
 	}
-}
+	defer conn.Close()
 
-func (m model) Init() tea.Cmd {
-	return tea.Batch(tick(), tea.EnterAltScreen)
-}
+	// Make a echo client and send an RPC.
+	rgc := pb.NewHelloServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := message.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "q", "esc", "ctrl+c":
-			return m, tea.Quit
-		}
-		
-	case tickMsg:
-		m--
-		if m <= 0 {
-			return m, tea.Quit
-		}
-		return m, tick()
+	resp, err := rgc.Hello(ctx, &pb.HelloClient{})
+	if err != nil {
+		log.Fatalf("could not get CA certificate %v: ", err)
 	}
-	
-	return m, nil
-}
 
-func (m model) View() string {
-	return fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m)
-}
+	CACert := resp.CA
 
-func tick() tea.Cmd {
-	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
-		return tickMsg(t)
-	})
-}
+	//create file
+	caFile, err := os.Create(path+"/ca.pem")
+	if err != nil {
+		log.Fatalf("could not create file: %v", err)
+	}
 
+	//write to file
+	_, err = caFile.Write([]byte(CACert))
+	if err != nil {
+		log.Fatalf("could not write to file: %v", err)
+	}
+	caFile.Close()
+}

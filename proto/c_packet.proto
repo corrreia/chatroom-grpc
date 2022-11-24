@@ -1,290 +1,43 @@
+/*
+ *
+ * Copyright 2018 gRPC authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 syntax = "proto3";
 
-option go_package = "./proto";
+option go_package = "/proto";
 
-service ConnectionService {
-  rpc Connect (ConnectRequest) returns (ConnectResponse) {}
-  rpc Disconnect (DisconnectRequest) returns (DisconnectResponse) {}
-  rpc Register (RegisterRequest) returns (RegisterResponse) {}
+// EchoRequest is the request for echo.
+message EchoRequest {
+  string message = 1;
 }
 
-message ConnectRequest {
-    int64 timestamp = 1;
-    
-    string username = 2;
-    string password_hash = 3;
-
-    string server_password = 4;
+// EchoResponse is the response for echo.
+message EchoResponse {
+  string message = 1;
 }
 
-message ConnectResponse {
-    string token = 1;
-
-    enum Status {
-        SUCCESS = 0;
-        INVALID_CREDENTIALS = 1;
-        ALREADY_CONNECTED = 2;
-        SERVER_FULL = 3;
-        USER_BANNED = 4;
-        USER_UNKNOWN = 5;
-        INVALID_SERVER_PASSWORD = 6;
-    }
-    Status status = 2;
-}
-
-message DisconnectRequest {
-    int64 timestamp = 1;
-}
-
-message DisconnectResponse {
-    enum Status {
-        SUCCESS = 0;
-        INVALID_TOKEN = 1;
-    }
-    Status status = 2;
-}
-
-message RegisterRequest {
-    int64 timestamp = 1;
-
-    string username = 2;
-    string password_hash = 3;
-
-    string server_password = 4;
-}
-
-message RegisterResponse {
-    enum Status {
-        SUCCESS = 0;
-        USERNAME_TAKEN = 1;
-        USER_BANNED = 2;
-        INVALID_SERVER_PASSWORD = 3;
-    }
-    Status status = 2;
-}
-
-service DataService {
-    rpc SendMessage (SendMessageRequest) returns (SendMessageResponse) {}
-    rpc SendCommand (SendCommandRequest) returns (SendCommandResponse) {}
-}
-
-message SendMessageRequest {
-    int64 timestamp = 1;
-    string message = 2;
-}
-
-message SendMessageResponse {
-    enum Status {
-        SUCCESS = 0;
-        INVALID_TOKEN = 1;
-    }
-    Status status = 2;
-}
-
-message SendCommandRequest {
-    int64 timestamp = 1;
-    string command = 2;
-    repeated string args = 3;
-}
-
-message SendCommandResponse {
-    enum Status {
-        SUCCESS = 0;
-        INVALID_TOKEN = 1;
-        NOT_CONNECTED = 2;
-
-        INVALID_COMMAND = 3;
-        INVALID_ARGS = 4;
-
-        COMMAND_FAILED = 5;
-    }
-    Status status = 2;
-}
-
-service BroadcastService {
-    rpc Subscribe (SubscribeRequest) returns (stream SubscribeResponse) {}
-}
-
-message SubscribeRequest {}
-    
-message SubscribeResponse {
-    enum Type {
-        MESSAGE = 0;
-        LOGIN = 1;
-        LOGOUT = 2;
-    }
-    Type type = 1;
-
-    enum Status {
-        SUCCESS = 0;
-        INVALID_TOKEN = 1;
-
-        SERVER_ERROR = 3;
-    }
-    Status status = 2;
-
-    string username = 3;
-    string message = 4;
-}
-
-message User {
-    string username = 1;
-    string password_hash = 2;
-    string token = 3;
-
-    enum Role {
-        USER = 0;
-        ADMIN = 1;
-    }
-    Role role = 4;
-
-    string lastKnownIp = 6;
-    int64 lastSeen = 7;
-    int64 created = 8;
-    bool connected = 9;
-    bool banned = 10;
-    int64 timeConnected = 11;
-}
-
-service AdminService {
-    rpc GetUsers (GetUsersRequest) returns (GetUsersResponse) {}
-    rpc GetUser (GetUserRequest) returns (GetUserResponse) {}
-
-    rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
-    rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse) {}
-
-    rpc KickUser (KickUserRequest) returns (KickUserResponse) {}
-    rpc BanUser (BanUserRequest) returns (BanUserResponse) {}
-    rpc UnbanUser (UnbanUserRequest) returns (UnbanUserResponse) {}
-
-    rpc OpUser (OpUserRequest) returns (OpUserResponse) {}
-}
-
-message GetUsersRequest {
-    int64 timestamp = 1;
-}
-
-message GetUsersResponse {
-    repeated User users = 1;
-    enum Status {
-        SUCCESS = 0;
-        INVALID_TOKEN = 1;
-        NOT_CONNECTED = 2;
-        NOT_ADMIN = 3;
-    }
-    Status status = 2;
-}
-
-message GetUserRequest {
-    int64 timestamp = 1;
-    string username = 2;
-}
-
-message GetUserResponse {
-    User user = 1;
-    enum Status {
-        SUCCESS = 0;
-        INVALID_TOKEN = 1;
-        NOT_CONNECTED = 2;
-        NOT_ADMIN = 3;
-        USER_NOT_FOUND = 4;
-    }
-    Status status = 2;
-}
-
-message CreateUserRequest {
-    int64 timestamp = 1;
-    User user = 2;
-}
-
-message CreateUserResponse {
-    User user = 1;
-    enum Status {
-        SUCCESS = 0;
-        INVALID_TOKEN = 1;
-        NOT_CONNECTED = 2;
-        NOT_ADMIN = 3;
-        USER_ALREADY_EXISTS = 4;
-    }
-    Status status = 2;
-}
-
-message DeleteUserRequest {
-    int64 timestamp = 1;
-    string username = 2;
-}
-
-message DeleteUserResponse {
-    bool success = 1;
-    enum Status {
-        SUCCESS = 0;
-        INVALID_TOKEN = 1;
-        NOT_CONNECTED = 2;
-        NOT_ADMIN = 3;
-        USER_NOT_FOUND = 4;
-    }
-    Status status = 2;
-}
-
-message KickUserRequest {
-    int64 timestamp = 1;
-    string username = 3;
-}
-
-message KickUserResponse {
-    enum Status {
-        SUCCESS = 0;
-        INVALID_TOKEN = 1;
-        NOT_CONNECTED = 2;
-        NOT_ADMIN = 3;
-        USER_NOT_FOUND = 4;
-    }
-    Status status = 2;
-}
-
-message BanUserRequest {
-    int64 timestamp = 1;
-    string username = 2;
-}
-
-message BanUserResponse {
-    enum Status {
-        SUCCESS = 0;
-        INVALID_TOKEN = 1;
-        NOT_CONNECTED = 2;
-        NOT_ADMIN = 3;
-        USER_NOT_FOUND = 4;
-    }
-    Status status = 2;
-}
-
-message UnbanUserRequest {
-    int64 timestamp = 1;
-    string username = 2;
-}
-
-message UnbanUserResponse {
-    enum Status {
-        SUCCESS = 0;
-        INVALID_TOKEN = 1;
-        NOT_CONNECTED = 2;
-        NOT_ADMIN = 3;
-        USER_NOT_FOUND = 4;
-    }
-    Status status = 2;
-}
-
-message OpUserRequest {
-    int64 timestamp = 1;
-    string username = 2;
-}
-
-message OpUserResponse {
-    enum Status {
-        SUCCESS = 0;
-        INVALID_TOKEN = 1;
-        NOT_ADMIN = 3;
-        USER_NOT_FOUND = 4;
-    }
-    Status status = 2;
+// Echo is the echo service.
+service Echo {
+  // UnaryEcho is unary echo.
+  rpc UnaryEcho(EchoRequest) returns (EchoResponse) {}
+  // ServerStreamingEcho is server side streaming.
+  rpc ServerStreamingEcho(EchoRequest) returns (stream EchoResponse) {}
+  // ClientStreamingEcho is client side streaming.
+  rpc ClientStreamingEcho(stream EchoRequest) returns (EchoResponse) {}
+  // BidirectionalStreamingEcho is bidi streaming.
+  rpc BidirectionalStreamingEcho(stream EchoRequest) returns (stream EchoResponse) {}
 }

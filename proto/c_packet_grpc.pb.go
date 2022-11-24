@@ -18,307 +18,43 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// ConnectionServiceClient is the client API for ConnectionService service.
+// EchoClient is the client API for Echo service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ConnectionServiceClient interface {
-	Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error)
-	Disconnect(ctx context.Context, in *DisconnectRequest, opts ...grpc.CallOption) (*DisconnectResponse, error)
-	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
+type EchoClient interface {
+	// UnaryEcho is unary echo.
+	UnaryEcho(ctx context.Context, in *EchoRequest, opts ...grpc.CallOption) (*EchoResponse, error)
+	// ServerStreamingEcho is server side streaming.
+	ServerStreamingEcho(ctx context.Context, in *EchoRequest, opts ...grpc.CallOption) (Echo_ServerStreamingEchoClient, error)
+	// ClientStreamingEcho is client side streaming.
+	ClientStreamingEcho(ctx context.Context, opts ...grpc.CallOption) (Echo_ClientStreamingEchoClient, error)
+	// BidirectionalStreamingEcho is bidi streaming.
+	BidirectionalStreamingEcho(ctx context.Context, opts ...grpc.CallOption) (Echo_BidirectionalStreamingEchoClient, error)
 }
 
-type connectionServiceClient struct {
+type echoClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewConnectionServiceClient(cc grpc.ClientConnInterface) ConnectionServiceClient {
-	return &connectionServiceClient{cc}
+func NewEchoClient(cc grpc.ClientConnInterface) EchoClient {
+	return &echoClient{cc}
 }
 
-func (c *connectionServiceClient) Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error) {
-	out := new(ConnectResponse)
-	err := c.cc.Invoke(ctx, "/ConnectionService/Connect", in, out, opts...)
+func (c *echoClient) UnaryEcho(ctx context.Context, in *EchoRequest, opts ...grpc.CallOption) (*EchoResponse, error) {
+	out := new(EchoResponse)
+	err := c.cc.Invoke(ctx, "/Echo/UnaryEcho", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *connectionServiceClient) Disconnect(ctx context.Context, in *DisconnectRequest, opts ...grpc.CallOption) (*DisconnectResponse, error) {
-	out := new(DisconnectResponse)
-	err := c.cc.Invoke(ctx, "/ConnectionService/Disconnect", in, out, opts...)
+func (c *echoClient) ServerStreamingEcho(ctx context.Context, in *EchoRequest, opts ...grpc.CallOption) (Echo_ServerStreamingEchoClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Echo_ServiceDesc.Streams[0], "/Echo/ServerStreamingEcho", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
-}
-
-func (c *connectionServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
-	out := new(RegisterResponse)
-	err := c.cc.Invoke(ctx, "/ConnectionService/Register", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// ConnectionServiceServer is the server API for ConnectionService service.
-// All implementations must embed UnimplementedConnectionServiceServer
-// for forward compatibility
-type ConnectionServiceServer interface {
-	Connect(context.Context, *ConnectRequest) (*ConnectResponse, error)
-	Disconnect(context.Context, *DisconnectRequest) (*DisconnectResponse, error)
-	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
-	mustEmbedUnimplementedConnectionServiceServer()
-}
-
-// UnimplementedConnectionServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedConnectionServiceServer struct {
-}
-
-func (UnimplementedConnectionServiceServer) Connect(context.Context, *ConnectRequest) (*ConnectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Connect not implemented")
-}
-func (UnimplementedConnectionServiceServer) Disconnect(context.Context, *DisconnectRequest) (*DisconnectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Disconnect not implemented")
-}
-func (UnimplementedConnectionServiceServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
-}
-func (UnimplementedConnectionServiceServer) mustEmbedUnimplementedConnectionServiceServer() {}
-
-// UnsafeConnectionServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ConnectionServiceServer will
-// result in compilation errors.
-type UnsafeConnectionServiceServer interface {
-	mustEmbedUnimplementedConnectionServiceServer()
-}
-
-func RegisterConnectionServiceServer(s grpc.ServiceRegistrar, srv ConnectionServiceServer) {
-	s.RegisterService(&ConnectionService_ServiceDesc, srv)
-}
-
-func _ConnectionService_Connect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ConnectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConnectionServiceServer).Connect(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ConnectionService/Connect",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConnectionServiceServer).Connect(ctx, req.(*ConnectRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ConnectionService_Disconnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DisconnectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConnectionServiceServer).Disconnect(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ConnectionService/Disconnect",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConnectionServiceServer).Disconnect(ctx, req.(*DisconnectRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ConnectionService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConnectionServiceServer).Register(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ConnectionService/Register",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConnectionServiceServer).Register(ctx, req.(*RegisterRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// ConnectionService_ServiceDesc is the grpc.ServiceDesc for ConnectionService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var ConnectionService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ConnectionService",
-	HandlerType: (*ConnectionServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Connect",
-			Handler:    _ConnectionService_Connect_Handler,
-		},
-		{
-			MethodName: "Disconnect",
-			Handler:    _ConnectionService_Disconnect_Handler,
-		},
-		{
-			MethodName: "Register",
-			Handler:    _ConnectionService_Register_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/c_packet.proto",
-}
-
-// DataServiceClient is the client API for DataService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type DataServiceClient interface {
-	SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (*SendMessageResponse, error)
-	SendCommand(ctx context.Context, in *SendCommandRequest, opts ...grpc.CallOption) (*SendCommandResponse, error)
-}
-
-type dataServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewDataServiceClient(cc grpc.ClientConnInterface) DataServiceClient {
-	return &dataServiceClient{cc}
-}
-
-func (c *dataServiceClient) SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (*SendMessageResponse, error) {
-	out := new(SendMessageResponse)
-	err := c.cc.Invoke(ctx, "/DataService/SendMessage", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *dataServiceClient) SendCommand(ctx context.Context, in *SendCommandRequest, opts ...grpc.CallOption) (*SendCommandResponse, error) {
-	out := new(SendCommandResponse)
-	err := c.cc.Invoke(ctx, "/DataService/SendCommand", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// DataServiceServer is the server API for DataService service.
-// All implementations must embed UnimplementedDataServiceServer
-// for forward compatibility
-type DataServiceServer interface {
-	SendMessage(context.Context, *SendMessageRequest) (*SendMessageResponse, error)
-	SendCommand(context.Context, *SendCommandRequest) (*SendCommandResponse, error)
-	mustEmbedUnimplementedDataServiceServer()
-}
-
-// UnimplementedDataServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedDataServiceServer struct {
-}
-
-func (UnimplementedDataServiceServer) SendMessage(context.Context, *SendMessageRequest) (*SendMessageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendMessage not implemented")
-}
-func (UnimplementedDataServiceServer) SendCommand(context.Context, *SendCommandRequest) (*SendCommandResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendCommand not implemented")
-}
-func (UnimplementedDataServiceServer) mustEmbedUnimplementedDataServiceServer() {}
-
-// UnsafeDataServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to DataServiceServer will
-// result in compilation errors.
-type UnsafeDataServiceServer interface {
-	mustEmbedUnimplementedDataServiceServer()
-}
-
-func RegisterDataServiceServer(s grpc.ServiceRegistrar, srv DataServiceServer) {
-	s.RegisterService(&DataService_ServiceDesc, srv)
-}
-
-func _DataService_SendMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SendMessageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DataServiceServer).SendMessage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/DataService/SendMessage",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataServiceServer).SendMessage(ctx, req.(*SendMessageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DataService_SendCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SendCommandRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DataServiceServer).SendCommand(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/DataService/SendCommand",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataServiceServer).SendCommand(ctx, req.(*SendCommandRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// DataService_ServiceDesc is the grpc.ServiceDesc for DataService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var DataService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "DataService",
-	HandlerType: (*DataServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "SendMessage",
-			Handler:    _DataService_SendMessage_Handler,
-		},
-		{
-			MethodName: "SendCommand",
-			Handler:    _DataService_SendCommand_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/c_packet.proto",
-}
-
-// BroadcastServiceClient is the client API for BroadcastService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type BroadcastServiceClient interface {
-	Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (BroadcastService_SubscribeClient, error)
-}
-
-type broadcastServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewBroadcastServiceClient(cc grpc.ClientConnInterface) BroadcastServiceClient {
-	return &broadcastServiceClient{cc}
-}
-
-func (c *broadcastServiceClient) Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (BroadcastService_SubscribeClient, error) {
-	stream, err := c.cc.NewStream(ctx, &BroadcastService_ServiceDesc.Streams[0], "/BroadcastService/Subscribe", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &broadcastServiceSubscribeClient{stream}
+	x := &echoServerStreamingEchoClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -328,423 +64,252 @@ func (c *broadcastServiceClient) Subscribe(ctx context.Context, in *SubscribeReq
 	return x, nil
 }
 
-type BroadcastService_SubscribeClient interface {
-	Recv() (*SubscribeResponse, error)
+type Echo_ServerStreamingEchoClient interface {
+	Recv() (*EchoResponse, error)
 	grpc.ClientStream
 }
 
-type broadcastServiceSubscribeClient struct {
+type echoServerStreamingEchoClient struct {
 	grpc.ClientStream
 }
 
-func (x *broadcastServiceSubscribeClient) Recv() (*SubscribeResponse, error) {
-	m := new(SubscribeResponse)
+func (x *echoServerStreamingEchoClient) Recv() (*EchoResponse, error) {
+	m := new(EchoResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-// BroadcastServiceServer is the server API for BroadcastService service.
-// All implementations must embed UnimplementedBroadcastServiceServer
+func (c *echoClient) ClientStreamingEcho(ctx context.Context, opts ...grpc.CallOption) (Echo_ClientStreamingEchoClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Echo_ServiceDesc.Streams[1], "/Echo/ClientStreamingEcho", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &echoClientStreamingEchoClient{stream}
+	return x, nil
+}
+
+type Echo_ClientStreamingEchoClient interface {
+	Send(*EchoRequest) error
+	CloseAndRecv() (*EchoResponse, error)
+	grpc.ClientStream
+}
+
+type echoClientStreamingEchoClient struct {
+	grpc.ClientStream
+}
+
+func (x *echoClientStreamingEchoClient) Send(m *EchoRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *echoClientStreamingEchoClient) CloseAndRecv() (*EchoResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(EchoResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *echoClient) BidirectionalStreamingEcho(ctx context.Context, opts ...grpc.CallOption) (Echo_BidirectionalStreamingEchoClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Echo_ServiceDesc.Streams[2], "/Echo/BidirectionalStreamingEcho", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &echoBidirectionalStreamingEchoClient{stream}
+	return x, nil
+}
+
+type Echo_BidirectionalStreamingEchoClient interface {
+	Send(*EchoRequest) error
+	Recv() (*EchoResponse, error)
+	grpc.ClientStream
+}
+
+type echoBidirectionalStreamingEchoClient struct {
+	grpc.ClientStream
+}
+
+func (x *echoBidirectionalStreamingEchoClient) Send(m *EchoRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *echoBidirectionalStreamingEchoClient) Recv() (*EchoResponse, error) {
+	m := new(EchoResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// EchoServer is the server API for Echo service.
+// All implementations must embed UnimplementedEchoServer
 // for forward compatibility
-type BroadcastServiceServer interface {
-	Subscribe(*SubscribeRequest, BroadcastService_SubscribeServer) error
-	mustEmbedUnimplementedBroadcastServiceServer()
+type EchoServer interface {
+	// UnaryEcho is unary echo.
+	UnaryEcho(context.Context, *EchoRequest) (*EchoResponse, error)
+	// ServerStreamingEcho is server side streaming.
+	ServerStreamingEcho(*EchoRequest, Echo_ServerStreamingEchoServer) error
+	// ClientStreamingEcho is client side streaming.
+	ClientStreamingEcho(Echo_ClientStreamingEchoServer) error
+	// BidirectionalStreamingEcho is bidi streaming.
+	BidirectionalStreamingEcho(Echo_BidirectionalStreamingEchoServer) error
+	mustEmbedUnimplementedEchoServer()
 }
 
-// UnimplementedBroadcastServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedBroadcastServiceServer struct {
+// UnimplementedEchoServer must be embedded to have forward compatible implementations.
+type UnimplementedEchoServer struct {
 }
 
-func (UnimplementedBroadcastServiceServer) Subscribe(*SubscribeRequest, BroadcastService_SubscribeServer) error {
-	return status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
+func (UnimplementedEchoServer) UnaryEcho(context.Context, *EchoRequest) (*EchoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnaryEcho not implemented")
 }
-func (UnimplementedBroadcastServiceServer) mustEmbedUnimplementedBroadcastServiceServer() {}
+func (UnimplementedEchoServer) ServerStreamingEcho(*EchoRequest, Echo_ServerStreamingEchoServer) error {
+	return status.Errorf(codes.Unimplemented, "method ServerStreamingEcho not implemented")
+}
+func (UnimplementedEchoServer) ClientStreamingEcho(Echo_ClientStreamingEchoServer) error {
+	return status.Errorf(codes.Unimplemented, "method ClientStreamingEcho not implemented")
+}
+func (UnimplementedEchoServer) BidirectionalStreamingEcho(Echo_BidirectionalStreamingEchoServer) error {
+	return status.Errorf(codes.Unimplemented, "method BidirectionalStreamingEcho not implemented")
+}
+func (UnimplementedEchoServer) mustEmbedUnimplementedEchoServer() {}
 
-// UnsafeBroadcastServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to BroadcastServiceServer will
+// UnsafeEchoServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to EchoServer will
 // result in compilation errors.
-type UnsafeBroadcastServiceServer interface {
-	mustEmbedUnimplementedBroadcastServiceServer()
+type UnsafeEchoServer interface {
+	mustEmbedUnimplementedEchoServer()
 }
 
-func RegisterBroadcastServiceServer(s grpc.ServiceRegistrar, srv BroadcastServiceServer) {
-	s.RegisterService(&BroadcastService_ServiceDesc, srv)
+func RegisterEchoServer(s grpc.ServiceRegistrar, srv EchoServer) {
+	s.RegisterService(&Echo_ServiceDesc, srv)
 }
 
-func _BroadcastService_Subscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(SubscribeRequest)
+func _Echo_UnaryEcho_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EchoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EchoServer).UnaryEcho(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Echo/UnaryEcho",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EchoServer).UnaryEcho(ctx, req.(*EchoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Echo_ServerStreamingEcho_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(EchoRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(BroadcastServiceServer).Subscribe(m, &broadcastServiceSubscribeServer{stream})
+	return srv.(EchoServer).ServerStreamingEcho(m, &echoServerStreamingEchoServer{stream})
 }
 
-type BroadcastService_SubscribeServer interface {
-	Send(*SubscribeResponse) error
+type Echo_ServerStreamingEchoServer interface {
+	Send(*EchoResponse) error
 	grpc.ServerStream
 }
 
-type broadcastServiceSubscribeServer struct {
+type echoServerStreamingEchoServer struct {
 	grpc.ServerStream
 }
 
-func (x *broadcastServiceSubscribeServer) Send(m *SubscribeResponse) error {
+func (x *echoServerStreamingEchoServer) Send(m *EchoResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-// BroadcastService_ServiceDesc is the grpc.ServiceDesc for BroadcastService service.
+func _Echo_ClientStreamingEcho_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(EchoServer).ClientStreamingEcho(&echoClientStreamingEchoServer{stream})
+}
+
+type Echo_ClientStreamingEchoServer interface {
+	SendAndClose(*EchoResponse) error
+	Recv() (*EchoRequest, error)
+	grpc.ServerStream
+}
+
+type echoClientStreamingEchoServer struct {
+	grpc.ServerStream
+}
+
+func (x *echoClientStreamingEchoServer) SendAndClose(m *EchoResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *echoClientStreamingEchoServer) Recv() (*EchoRequest, error) {
+	m := new(EchoRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Echo_BidirectionalStreamingEcho_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(EchoServer).BidirectionalStreamingEcho(&echoBidirectionalStreamingEchoServer{stream})
+}
+
+type Echo_BidirectionalStreamingEchoServer interface {
+	Send(*EchoResponse) error
+	Recv() (*EchoRequest, error)
+	grpc.ServerStream
+}
+
+type echoBidirectionalStreamingEchoServer struct {
+	grpc.ServerStream
+}
+
+func (x *echoBidirectionalStreamingEchoServer) Send(m *EchoResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *echoBidirectionalStreamingEchoServer) Recv() (*EchoRequest, error) {
+	m := new(EchoRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// Echo_ServiceDesc is the grpc.ServiceDesc for Echo service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var BroadcastService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "BroadcastService",
-	HandlerType: (*BroadcastServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "Subscribe",
-			Handler:       _BroadcastService_Subscribe_Handler,
-			ServerStreams: true,
-		},
-	},
-	Metadata: "proto/c_packet.proto",
-}
-
-// AdminServiceClient is the client API for AdminService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type AdminServiceClient interface {
-	GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error)
-	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
-	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
-	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
-	KickUser(ctx context.Context, in *KickUserRequest, opts ...grpc.CallOption) (*KickUserResponse, error)
-	BanUser(ctx context.Context, in *BanUserRequest, opts ...grpc.CallOption) (*BanUserResponse, error)
-	UnbanUser(ctx context.Context, in *UnbanUserRequest, opts ...grpc.CallOption) (*UnbanUserResponse, error)
-	OpUser(ctx context.Context, in *OpUserRequest, opts ...grpc.CallOption) (*OpUserResponse, error)
-}
-
-type adminServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewAdminServiceClient(cc grpc.ClientConnInterface) AdminServiceClient {
-	return &adminServiceClient{cc}
-}
-
-func (c *adminServiceClient) GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error) {
-	out := new(GetUsersResponse)
-	err := c.cc.Invoke(ctx, "/AdminService/GetUsers", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *adminServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
-	out := new(GetUserResponse)
-	err := c.cc.Invoke(ctx, "/AdminService/GetUser", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *adminServiceClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
-	out := new(CreateUserResponse)
-	err := c.cc.Invoke(ctx, "/AdminService/CreateUser", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *adminServiceClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
-	out := new(DeleteUserResponse)
-	err := c.cc.Invoke(ctx, "/AdminService/DeleteUser", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *adminServiceClient) KickUser(ctx context.Context, in *KickUserRequest, opts ...grpc.CallOption) (*KickUserResponse, error) {
-	out := new(KickUserResponse)
-	err := c.cc.Invoke(ctx, "/AdminService/KickUser", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *adminServiceClient) BanUser(ctx context.Context, in *BanUserRequest, opts ...grpc.CallOption) (*BanUserResponse, error) {
-	out := new(BanUserResponse)
-	err := c.cc.Invoke(ctx, "/AdminService/BanUser", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *adminServiceClient) UnbanUser(ctx context.Context, in *UnbanUserRequest, opts ...grpc.CallOption) (*UnbanUserResponse, error) {
-	out := new(UnbanUserResponse)
-	err := c.cc.Invoke(ctx, "/AdminService/UnbanUser", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *adminServiceClient) OpUser(ctx context.Context, in *OpUserRequest, opts ...grpc.CallOption) (*OpUserResponse, error) {
-	out := new(OpUserResponse)
-	err := c.cc.Invoke(ctx, "/AdminService/OpUser", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// AdminServiceServer is the server API for AdminService service.
-// All implementations must embed UnimplementedAdminServiceServer
-// for forward compatibility
-type AdminServiceServer interface {
-	GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error)
-	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
-	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
-	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
-	KickUser(context.Context, *KickUserRequest) (*KickUserResponse, error)
-	BanUser(context.Context, *BanUserRequest) (*BanUserResponse, error)
-	UnbanUser(context.Context, *UnbanUserRequest) (*UnbanUserResponse, error)
-	OpUser(context.Context, *OpUserRequest) (*OpUserResponse, error)
-	mustEmbedUnimplementedAdminServiceServer()
-}
-
-// UnimplementedAdminServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedAdminServiceServer struct {
-}
-
-func (UnimplementedAdminServiceServer) GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
-}
-func (UnimplementedAdminServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
-}
-func (UnimplementedAdminServiceServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
-}
-func (UnimplementedAdminServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
-}
-func (UnimplementedAdminServiceServer) KickUser(context.Context, *KickUserRequest) (*KickUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method KickUser not implemented")
-}
-func (UnimplementedAdminServiceServer) BanUser(context.Context, *BanUserRequest) (*BanUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BanUser not implemented")
-}
-func (UnimplementedAdminServiceServer) UnbanUser(context.Context, *UnbanUserRequest) (*UnbanUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UnbanUser not implemented")
-}
-func (UnimplementedAdminServiceServer) OpUser(context.Context, *OpUserRequest) (*OpUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method OpUser not implemented")
-}
-func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
-
-// UnsafeAdminServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AdminServiceServer will
-// result in compilation errors.
-type UnsafeAdminServiceServer interface {
-	mustEmbedUnimplementedAdminServiceServer()
-}
-
-func RegisterAdminServiceServer(s grpc.ServiceRegistrar, srv AdminServiceServer) {
-	s.RegisterService(&AdminService_ServiceDesc, srv)
-}
-
-func _AdminService_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUsersRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AdminServiceServer).GetUsers(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/AdminService/GetUsers",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AdminServiceServer).GetUsers(ctx, req.(*GetUsersRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AdminService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AdminServiceServer).GetUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/AdminService/GetUser",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AdminServiceServer).GetUser(ctx, req.(*GetUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AdminService_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AdminServiceServer).CreateUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/AdminService/CreateUser",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AdminServiceServer).CreateUser(ctx, req.(*CreateUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AdminService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AdminServiceServer).DeleteUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/AdminService/DeleteUser",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AdminServiceServer).DeleteUser(ctx, req.(*DeleteUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AdminService_KickUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(KickUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AdminServiceServer).KickUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/AdminService/KickUser",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AdminServiceServer).KickUser(ctx, req.(*KickUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AdminService_BanUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BanUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AdminServiceServer).BanUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/AdminService/BanUser",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AdminServiceServer).BanUser(ctx, req.(*BanUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AdminService_UnbanUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UnbanUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AdminServiceServer).UnbanUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/AdminService/UnbanUser",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AdminServiceServer).UnbanUser(ctx, req.(*UnbanUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AdminService_OpUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(OpUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AdminServiceServer).OpUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/AdminService/OpUser",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AdminServiceServer).OpUser(ctx, req.(*OpUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var AdminService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "AdminService",
-	HandlerType: (*AdminServiceServer)(nil),
+var Echo_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "Echo",
+	HandlerType: (*EchoServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetUsers",
-			Handler:    _AdminService_GetUsers_Handler,
-		},
-		{
-			MethodName: "GetUser",
-			Handler:    _AdminService_GetUser_Handler,
-		},
-		{
-			MethodName: "CreateUser",
-			Handler:    _AdminService_CreateUser_Handler,
-		},
-		{
-			MethodName: "DeleteUser",
-			Handler:    _AdminService_DeleteUser_Handler,
-		},
-		{
-			MethodName: "KickUser",
-			Handler:    _AdminService_KickUser_Handler,
-		},
-		{
-			MethodName: "BanUser",
-			Handler:    _AdminService_BanUser_Handler,
-		},
-		{
-			MethodName: "UnbanUser",
-			Handler:    _AdminService_UnbanUser_Handler,
-		},
-		{
-			MethodName: "OpUser",
-			Handler:    _AdminService_OpUser_Handler,
+			MethodName: "UnaryEcho",
+			Handler:    _Echo_UnaryEcho_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "ServerStreamingEcho",
+			Handler:       _Echo_ServerStreamingEcho_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "ClientStreamingEcho",
+			Handler:       _Echo_ClientStreamingEcho_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "BidirectionalStreamingEcho",
+			Handler:       _Echo_BidirectionalStreamingEcho_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "proto/c_packet.proto",
 }
