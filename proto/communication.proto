@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+option go_package = "/proto";
+
+service ChatService {
+  rpc SendMessage (MessageS) returns (MessageR) {}
+  rpc SubscribeMessage (SubRequest) returns (stream SubMessage) {}
+}
+  //TODO: REMOVE ALL TOKENS FROM THE PROTO FILE, auth is done via grpc metadata
+message MessageS {
+  string token = 1;
+  string message = 2;
+}
+
+message MessageR {
+  enum Status {
+    OK = 0;
+    ERROR = 1;
+  }
+  Status status = 1;
+}
+
+message SubRequest {
+  string token = 1;
+}
+
+message SubMessage {
+  enum Status {
+    OK = 0;
+    ERROR = 1;
+  }
+  Status status = 1;
+
+  string message = 2;
+}
+
+service CommandService {
+  rpc SendCommand (CommandS) returns (CommandR) {}
+}
+
+message CommandS {
+  string token = 1;
+  string command = 2;
+  repeated string args = 3;
+}
+
+message CommandR {
+  enum Status {
+    OK = 0;
+    ERROR = 1;
+  }
+  Status status = 1;
+
+  string message = 2;
+}
+
+service AnnouncementService {
+  rpc SendAnnouncement (SubRequest) returns (stream SubAnnouncement) {}
+}
+
+message SubAnnouncement {
+  enum Status {
+    OK = 0;
+    ERROR = 1;
+  }
+  Status status = 1;
+
+  string message = 2;
+}

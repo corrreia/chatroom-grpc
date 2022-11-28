@@ -3,6 +3,7 @@ module github.com/corrreia/chatroom-grpc
 go 1.13
 
 require (
+	golang.org/x/crypto v0.3.0
 	golang.org/x/net v0.2.0 // indirect
 	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
 	google.golang.org/grpc v1.50.1

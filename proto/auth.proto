@@ -3,28 +3,49 @@ syntax = "proto3";
 option go_package = "/proto";
 
 service AuthService {
-    rpc Login (LoginRequest) returns (LoginResponse) {}
-    rpc Register (RegisterRequest) returns (RegisterResponse) {}
+  rpc Login (LoginRequest) returns (LoginResponse) {}
+  rpc Logout (LogoutRequest) returns (LogoutResponse) {}
+  rpc Register (RegisterRequest) returns (RegisterResponse) {}
 }
 
 message LoginRequest {
-    string username = 1;
-    string password = 2;
+  string username = 1;
+  string password = 2;
 }
 
 message LoginResponse {
-    string token = 1;
+  enum Status {
+    SUCCESS = 0;
+    INVALID_CREDENTIALS = 1;
+    INVALID_SERVER_PASSWORD = 2;
+    USER_BANNED = 3;
+    ALREADY_LOGGED_IN = 4;
+  }
+  Status status = 1;
+
+  string token = 2;
+}
+
+message LogoutRequest {
+}
+
+message LogoutResponse {
+  enum Status {
+    SUCCESS = 0;
+  }
+  Status status = 1;
 }
 
 message RegisterRequest {
-    string username = 1;
-    string password = 2;
+  string username = 1;
+  string password = 2;
 }
 
 message RegisterResponse {
-    enum Status {
-        OK = 0;
-        USERNAME_TAKEN = 1;
-    }
-    Status status = 1;
+  enum Status {
+    SUCCESS = 0;
+    USERNAME_EXISTS = 1;
+    INVALID_SERVER_PASSWORD = 2;
+  }
+  Status status = 1;
 }
