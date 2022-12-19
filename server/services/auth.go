@@ -14,12 +14,12 @@ type authServer struct {
 	pb.UnimplementedAuthServiceServer
 }
 
-var State *types.ServerState = nil
+var authState *types.ServerState = nil
 
 func StartAuthServer(s *grpc.Server, state *types.ServerState) {
 	log.Printf("Starting Auth server")
 
-	State = state
+	authState = state
 	pb.RegisterAuthServiceServer(s, &authServer{})
 }
 
@@ -27,7 +27,7 @@ func (s *authServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Login
 	log.Printf("Login request from %v", req.Username)
 
 	// check if user exists
-	user := State.GetUserByUsername(req.Username)
+	user := authState.GetUserByUsername(req.Username)
 	//id is User{} if user does not exist
 	if user.GetId() == "" {
 		return &pb.LoginResponse{Status: pb.LoginResponse_INVALID_CREDENTIALS}, nil

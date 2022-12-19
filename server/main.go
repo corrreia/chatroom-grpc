@@ -63,7 +63,7 @@ func main() {
 	helloS := grpc.NewServer(grpc.UnaryInterceptor(interceptors.UnaryLogInterceptor)) //this is a hello server so there is no encryption
 	mainS := grpc.NewServer(grpc.Creds(creds), grpc.UnaryInterceptor(interceptors.UnaryLogInterceptor))
 
-	services.StartHelloServer(helloS, state.GetCaPath()) // hello service to get ca certificate
+	//services.StartHelloServer(helloS, state.GetCaPath()) // hello service to get ca certificate  //! need to find a way to get the ca certificate from the server to the client
 	services.StartAuthServer(mainS, state) // auth service to authenticate clients and get token
 	services.StartCommunicationServer(mainS, state)  // communication service to send messages and commands
 
