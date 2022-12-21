@@ -1,35 +1,34 @@
 package services
 
 import (
-	"context"
 	"io/ioutil"
 	"log"
-
-	pb "github.com/corrreia/chatroom-grpc/proto"
-	"google.golang.org/grpc"
+	"net"
+	"strings"
 )
 
-type helloServer struct {
-	pb.UnimplementedHelloServiceServer
-}
-
-var caCert string = ""
-
-func StartHelloServer(s *grpc.Server, caPath string) {
+func StartHelloServer(socket net.PacketConn, caPath string) (error) {
 	log.Println("Starting Hello Server")
 
 	// read ca certificate
 	cacert, err := ioutil.ReadFile(caPath)
-	if err != nil {
-		log.Fatal(err)
-	}
+	if err!= nil { return err }
+
 	log.Println("CA certificate loaded")
 
-	caCert = string(cacert)
+	for {
+		buffer := make([]byte, 5) // HELLO
+		n, addr, err := socket.ReadFrom(buffer)
+		if err!= nil { return err }
 
-	pb.RegisterHelloServiceServer(s, &helloServer{})
-}
+		log.Printf("Client connected from %s\n", addr.String())
 
-func (s *helloServer) Hello(ctx context.Context, in *pb.HelloClient) (*pb.HelloServer, error) {
-	return &pb.HelloServer{CA: caCert}, nil
+		if strings.Contains(string(buffer[:n]), "HELLO") {
+            log.Println("Sending CA certificate")
+            _, err = socket.WriteTo([]byte(string(cacert)), addr)
+            if err!= nil { 
+				log.Println(err) //this should not return an error but if it does, it should not stop the server
+			}
+		}
+	}
 }

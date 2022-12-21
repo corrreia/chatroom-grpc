@@ -1,6 +1,8 @@
 package types
 
-import "github.com/corrreia/chatroom-grpc/utils"
+import (
+	"github.com/corrreia/chatroom-grpc/utils"
+)
 
 //user interface
 type Userer interface {
@@ -85,7 +87,11 @@ func (u *User) SetToken(token string) error {
 }
 
 func (u *User) SetPassword(password string) error {
-	u.password = utils.HashPassword(password)
+	hash, err := utils.GenerateHash(password)
+	if err != nil {
+		return err
+	}
+	u.password = hash
 	return nil
 }
 
@@ -110,6 +116,5 @@ func (u *User) RegenerateToken() error {
 }
 
 func (u *User) CheckPassword(password string) bool {
-	return u.password == utils.HashPassword(password)
+	return utils.CheckPassword(password, u.password)
 }
-

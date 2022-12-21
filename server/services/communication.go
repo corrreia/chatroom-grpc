@@ -25,4 +25,4 @@ func StartCommunicationServer(s *grpc.Server, state *types.ServerState) {
 	pb.RegisterCommandServiceServer(s, &communicationServer{})
 }
 
-func (s *communicationServer) SendAnnouncement(ctx context.Context, req *pb.AnnouncementRequest) (*pb.AnnouncementResponse, error) {
+// func (s *communicationServer) SendAnnouncement(ctx context.Context, req *pb.AnnouncementRequest) (*pb.AnnouncementResponse, error) {

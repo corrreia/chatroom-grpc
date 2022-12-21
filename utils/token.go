@@ -2,18 +2,15 @@ package utils
 
 import (
 	"crypto/rand"
-	"encoding/base64"
-	"log"
+	"fmt"
+	"os"
 )
 
 func GenerateToken() string {
-	//generate a random 32 bytes token
 	token := make([]byte, 32)
-	_, err := rand.Read(token)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	//convert to base64
-	return base64.StdEncoding.EncodeToString(token)
+    if _, err := rand.Read(token); err!= nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+	return fmt.Sprintf("%x", token)
 }

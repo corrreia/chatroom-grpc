@@ -6,12 +6,12 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 
 	"github.com/corrreia/chatroom-grpc/server/interceptors"
 	"github.com/corrreia/chatroom-grpc/server/services"
-	"github.com/corrreia/chatroom-grpc/utils"
 	"github.com/corrreia/chatroom-grpc/server/types"
-
+	"github.com/corrreia/chatroom-grpc/utils"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -27,14 +27,17 @@ func main() {
 	logFile := flag.String("log_file", "", "log file")
 	flag.Parse()
 
+	certPath := "./certs"
+
 	// create server state
 	state := types.NewServerState()
 
 	state.SetServerPassword(*password)
 	state.SetMaxClients(*maxClients)
-	state.SetCaPath(utils.Path("ca_cert_client.pem"))
-	state.SetCertPath(utils.Path("server_cert.pem"))
-	state.SetKeyPath(utils.Path("server_key.pem"))
+	state.SetPort(*port)
+	state.SetCaPath(filepath.Join(certPath, "ca_cert.pem"))
+	state.SetCertPath(filepath.Join(certPath, "server_cert.pem"))
+	state.SetKeyPath(filepath.Join(certPath, "server_key.pem"))
 
 	// set up logging
 	if *logFile != "" {
@@ -46,35 +49,69 @@ func main() {
 		log.SetOutput(f)
 	}
 
-	log.Println("Random test token: ", utils.GenerateToken())
+	log.Println("Random test token:", utils.GenerateToken())
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+	// open sockets
+	tcpSock, udpSock, err := openSockets(state.GetPort())
+	if err!= nil { 
+		log.Fatal(err)
 	}
 
 	// Create tls based credential.
 	creds, err := credentials.NewServerTLSFromFile(state.GetCertPath(), state.GetKeyPath())
 	if err != nil {
-		log.Fatalf("failed to create credentials: %v", err)
-	}
-	log.Println("Server credentials loaded")
-
-	helloS := grpc.NewServer(grpc.UnaryInterceptor(interceptors.UnaryLogInterceptor)) //this is a hello server so there is no encryption
-	mainS := grpc.NewServer(grpc.Creds(creds), grpc.UnaryInterceptor(interceptors.UnaryLogInterceptor))
-
-	//services.StartHelloServer(helloS, state.GetCaPath()) // hello service to get ca certificate  //! need to find a way to get the ca certificate from the server to the client
-	services.StartAuthServer(mainS, state) // auth service to authenticate clients and get token
-	services.StartCommunicationServer(mainS, state)  // communication service to send messages and commands
-
-
-	if err := helloS.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
-
-	if err := mainS.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Fatal(err)
 	}
 	
-	//* AFTER THIS LINE, THE SERVER IS RUNNING AND LISTENING FOR CONNECTIONS
+	log.Println("Server credentials loaded")
+
+	//create grpc servers
+	authS := grpc.NewServer(grpc.Creds(creds), grpc.UnaryInterceptor(interceptors.UnaryLogInterceptor))
+	mainS := grpc.NewServer(grpc.Creds(creds), grpc.UnaryInterceptor(interceptors.UnaryLogInterceptor)) //!TODO: add auth interceptor
+
+	services.StartAuthServer(authS, state) // auth service to authenticate clients and get token
+	services.StartCommunicationServer(mainS, state)  // communication service to send messages and commands
+	
+	errCh := make(chan error)
+
+	go func() {
+        err = services.StartHelloServer(udpSock, state.GetCaPath())
+		if err!= nil {
+            errCh <- err
+        }
+	}()
+
+	go func () {  //start hello server in a goroutine and send errors to channel
+		err = authS.Serve(tcpSock)
+		if err!= nil {
+            errCh <- err
+        }
+	}()
+
+	go func () { //start main server in a goroutine and send errors to channel
+		err = mainS.Serve(tcpSock)
+		if err!= nil {
+            errCh <- err
+        }		
+	}()
+
+	for { //wait for errors and exit if there is one
+		if err := <-errCh; err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func openSockets(port int) (net.Listener, net.PacketConn, error) {
+	TCPsock, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+        return nil, nil, err
+    }
+
+	UDPsock, err := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
+	if err!= nil {
+		return nil, nil, err
+	}
+
+	return TCPsock, UDPsock, nil
 }

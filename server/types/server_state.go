@@ -42,6 +42,7 @@ type ServerState struct {
 
 	serverPass string
 	maxClients int
+	port int
 
 	caPath string
 	certPath string
@@ -187,6 +188,15 @@ func (s *ServerState) SetKeyPath(path string) error {
 
 func (s *ServerState) GetCurrentClients() int {
 	return len(s.GetConnectedUserList())
+}
+
+func (s *ServerState) SetPort(port int) error {
+	s.port = port
+    return nil
+}
+
+func (s *ServerState) GetPort() int {
+	return s.port
 }
 
 //server state constructor
